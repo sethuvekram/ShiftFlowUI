@@ -6,36 +6,103 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
-import { mockLogEntries, mockMachines, mockHandovers } from "@/lib/mockData";
 import { format } from "date-fns";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { queryClient, apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import type { Handover, LogEntry, Machine } from "@shared/schema";
 
-export default function Handover() {
+export default function HandoverPage() {
+  const { toast } = useToast();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const userRole = localStorage.getItem("userRole") || "User";
 
-  // TODO: remove mock functionality - fetch real handover data
-  const pendingHandover = mockHandovers[0];
-  const completedTasks = mockLogEntries.filter(t => t.status === "Completed");
-  const machineStatuses = mockMachines;
+  const { data: handovers = [] } = useQuery<Handover[]>({ 
+    queryKey: ["/api/handovers"],
+    refetchInterval: 10000,
+  });
+
+  const { data: logEntries = [] } = useQuery<LogEntry[]>({ 
+    queryKey: ["/api/log-entries"] 
+  });
+
+  const { data: machines = [] } = useQuery<Machine[]>({ 
+    queryKey: ["/api/machines"] 
+  });
+
+  const updateHandoverMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const response = await apiRequest("PATCH", `/api/handovers/${id}`, data);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/handovers"] });
+    },
+  });
+
+  const pendingHandover = handovers.find(h => h.status === "Pending");
+  const completedTasks = logEntries.filter(t => t.status === "Completed");
 
   const handleApprove = () => {
-    // TODO: remove mock functionality - submit approval to API
-    console.log("Handover approved", {
-      handoverId: pendingHandover.id,
-      remarks: approvalRemarks,
-      checkedItems,
-    });
-    alert("Handover approved successfully!");
+    if (!pendingHandover) return;
+
+    updateHandoverMutation.mutate(
+      { 
+        id: pendingHandover.id, 
+        data: { 
+          status: "Approved",
+          approvedAt: new Date().toISOString(),
+        } 
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Handover approved",
+            description: "Shift handover has been approved successfully",
+          });
+          setCheckedItems({});
+          setApprovalRemarks("");
+        },
+        onError: () => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to approve handover",
+          });
+        },
+      }
+    );
   };
 
   const handleReject = () => {
-    // TODO: remove mock functionality - submit rejection to API
-    console.log("Handover rejected", {
-      handoverId: pendingHandover.id,
-      remarks: approvalRemarks,
-    });
-    alert("Handover rejected. Operator will be notified.");
+    if (!pendingHandover) return;
+
+    updateHandoverMutation.mutate(
+      { 
+        id: pendingHandover.id, 
+        data: { 
+          status: "Rejected",
+        } 
+      },
+      {
+        onSuccess: () => {
+          toast({
+            title: "Handover rejected",
+            description: "Operator will be notified to review and resubmit",
+          });
+          setCheckedItems({});
+          setApprovalRemarks("");
+        },
+        onError: () => {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to reject handover",
+          });
+        },
+      }
+    );
   };
 
   if (userRole !== "Supervisor") {
@@ -58,6 +125,27 @@ export default function Handover() {
     );
   }
 
+  if (!pendingHandover) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Handover Approval</h1>
+          <p className="text-muted-foreground">
+            Review and approve shift handover
+          </p>
+        </div>
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              No pending handovers at this time
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -73,7 +161,7 @@ export default function Handover() {
             <div>
               <CardTitle>Shift Handover Review</CardTitle>
               <CardDescription>
-                Submitted {format(pendingHandover.createdAt, "MMM dd, yyyy HH:mm")}
+                Submitted {format(new Date(pendingHandover.createdAt), "MMM dd, yyyy HH:mm")}
               </CardDescription>
             </div>
             <Badge variant="secondary" data-testid="badge-status">
@@ -127,7 +215,7 @@ export default function Handover() {
                     Machine statuses verified
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    {machineStatuses.filter(m => m.status === "Running").length}/{machineStatuses.length} machines operational
+                    {machines.filter(m => m.status === "Running").length}/{machines.length} machines operational
                   </p>
                 </div>
               </div>
@@ -181,6 +269,7 @@ export default function Handover() {
               onChange={(e) => setApprovalRemarks(e.target.value)}
               className="min-h-24"
               data-testid="textarea-approval-remarks"
+              disabled={updateHandoverMutation.isPending}
             />
           </div>
 
@@ -189,6 +278,7 @@ export default function Handover() {
               variant="outline"
               className="flex-1"
               onClick={handleReject}
+              disabled={updateHandoverMutation.isPending}
               data-testid="button-reject"
             >
               <XCircle className="h-4 w-4 mr-2" />
@@ -197,10 +287,11 @@ export default function Handover() {
             <Button
               className="flex-1"
               onClick={handleApprove}
+              disabled={updateHandoverMutation.isPending}
               data-testid="button-approve"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              Approve Handover
+              {updateHandoverMutation.isPending ? "Processing..." : "Approve Handover"}
             </Button>
           </div>
         </CardContent>

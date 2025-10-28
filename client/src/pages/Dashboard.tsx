@@ -4,13 +4,30 @@ import MachineStatusCard from "@/components/MachineStatusCard";
 import TaskItem from "@/components/TaskItem";
 import AlertNotification from "@/components/AlertNotification";
 import { Clock, ListTodo, AlertTriangle, Activity } from "lucide-react";
-import { mockLogEntries, mockMachines, mockAlerts } from "@/lib/mockData";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
+import type { LogEntry, Machine, Alert, Shift } from "@shared/schema";
 
 export default function Dashboard() {
-  // TODO: remove mock functionality - fetch real data from API
-  const pendingTasks = mockLogEntries.filter(t => t.status === "Pending" || t.status === "In Progress");
-  const activeAlerts = mockAlerts.filter(a => !a.resolved);
+  const { data: currentShift } = useQuery<Shift>({ 
+    queryKey: ["/api/shifts/current"] 
+  });
+  
+  const { data: logEntries = [] } = useQuery<LogEntry[]>({ 
+    queryKey: ["/api/log-entries"] 
+  });
+  
+  const { data: machines = [] } = useQuery<Machine[]>({ 
+    queryKey: ["/api/machines"] 
+  });
+  
+  const { data: alerts = [] } = useQuery<Alert[]>({ 
+    queryKey: ["/api/alerts"],
+    refetchInterval: 30000,
+  });
+
+  const pendingTasks = logEntries.filter(t => t.status === "Pending" || t.status === "In Progress");
+  const activeAlerts = alerts.filter(a => !a.resolved);
 
   return (
     <div className="space-y-6">
@@ -24,27 +41,27 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           title="Current Shift"
-          value="Morning"
+          value={currentShift?.shiftName || "No Active Shift"}
           icon={Clock}
-          subtitle="06:00 - 14:00"
+          subtitle={currentShift ? `${format(currentShift.startTime, "HH:mm")} - ${format(currentShift.endTime, "HH:mm")}` : ""}
         />
         <StatCard
           title="Pending Tasks"
           value={pendingTasks.length}
           icon={ListTodo}
           subtitle={`${pendingTasks.filter(t => t.priority === "High").length} high priority`}
-          variant="warning"
+          variant={pendingTasks.length > 0 ? "warning" : "default"}
         />
         <StatCard
           title="Active Alerts"
           value={activeAlerts.length}
           icon={AlertTriangle}
           subtitle={`${activeAlerts.filter(a => a.severity === "Warning").length} warnings`}
-          variant="danger"
+          variant={activeAlerts.length > 0 ? "danger" : "default"}
         />
         <StatCard
           title="Machines Online"
-          value={`${mockMachines.filter(m => m.status === "Running").length}/${mockMachines.length}`}
+          value={`${machines.filter(m => m.status === "Running").length}/${machines.length}`}
           icon={Activity}
           subtitle="System operational"
           variant="success"
@@ -60,7 +77,7 @@ export default function Dashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {mockMachines.map((machine) => (
+                {machines.map((machine) => (
                   <MachineStatusCard
                     key={machine.id}
                     machineName={machine.machineName}
@@ -87,7 +104,7 @@ export default function Dashboard() {
                   <TaskItem
                     key={task.id}
                     task={task.taskDescription}
-                    timestamp={task.timestamp}
+                    timestamp={new Date(task.timestamp)}
                     priority={task.priority}
                     status={task.status}
                     remarks={task.remarks || undefined}
@@ -115,7 +132,7 @@ export default function Dashboard() {
                     key={alert.id}
                     message={alert.message}
                     severity={alert.severity}
-                    timestamp={alert.timestamp}
+                    timestamp={new Date(alert.timestamp)}
                   />
                 ))
               )}

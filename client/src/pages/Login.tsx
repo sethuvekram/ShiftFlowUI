@@ -5,20 +5,58 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserCog, Wrench } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Login() {
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   const [selectedRole, setSelectedRole] = useState<"Supervisor" | "Operator" | null>(null);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: remove mock functionality - implement real authentication
-    console.log("Login attempted", { username, password, role: selectedRole });
-    localStorage.setItem("userRole", selectedRole || "");
-    localStorage.setItem("userName", username || "User");
-    setLocation("/dashboard");
+    setIsLoading(true);
+
+    try {
+      const response = await apiRequest("POST", "/api/auth/login", { username, password });
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Login failed");
+      }
+
+      if (data.user.role !== selectedRole) {
+        toast({
+          variant: "destructive",
+          title: "Role mismatch",
+          description: `This account is registered as ${data.user.role}, not ${selectedRole}`,
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      localStorage.setItem("userRole", data.user.role);
+      localStorage.setItem("userName", data.user.fullName);
+      localStorage.setItem("userId", data.user.id);
+      
+      toast({
+        title: "Login successful",
+        description: `Welcome back, ${data.user.fullName}`,
+      });
+      
+      setLocation("/dashboard");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Login failed",
+        description: error instanceof Error ? error.message : "Invalid credentials",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!selectedRole) {
@@ -74,6 +112,7 @@ export default function Login() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 data-testid="input-username"
+                disabled={isLoading}
                 required
               />
             </div>
@@ -86,6 +125,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 data-testid="input-password"
+                disabled={isLoading}
                 required
               />
             </div>
@@ -95,6 +135,7 @@ export default function Login() {
                 variant="outline"
                 className="flex-1"
                 onClick={() => setSelectedRole(null)}
+                disabled={isLoading}
                 data-testid="button-back"
               >
                 Back
@@ -102,9 +143,10 @@ export default function Login() {
               <Button
                 type="submit"
                 className="flex-1"
+                disabled={isLoading}
                 data-testid="button-login"
               >
-                Sign In
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </div>
           </form>
