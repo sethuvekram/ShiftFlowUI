@@ -11,28 +11,47 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { LayoutDashboard, BookOpen, ClipboardCheck, FileBarChart, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, ClipboardCheck, FileBarChart, Settings, LogOut, Brain, Zap } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const menuItems = [
   {
-    title: "Dashboard",
+    title: "nav.dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    title: "Digital Logbook",
+    title: "Advanced Analytics",
+    url: "/advanced",
+    icon: Brain,
+    badge: "NEW",
+  },
+  {
+    title: "nav.logbook",
     url: "/logbook",
     icon: BookOpen,
   },
   {
-    title: "Handover Approval",
+    title: "nav.handover",
     url: "/handover",
     icon: ClipboardCheck,
   },
   {
-    title: "Reports & Analytics",
+    title: "nav.reports",
     url: "/reports",
     icon: FileBarChart,
+  },
+  {
+    title: "nav.demo",
+    url: "/demo",
+    icon: Zap,
+    badge: "DEMO",
+  },
+  {
+    title: "nav.administration",
+    url: "/admin",
+    icon: Settings,
+    requiresAdmin: true,
   },
 ];
 
@@ -40,6 +59,7 @@ export function AppSidebar() {
   const [location, setLocation] = useLocation();
   const userRole = localStorage.getItem("userRole") || "User";
   const userName = localStorage.getItem("userName") || "Guest";
+  const { t } = useLanguage();
 
   const handleLogout = () => {
     // TODO: remove mock functionality - implement real logout
@@ -66,7 +86,9 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems
+                .filter(item => !item.requiresAdmin || userRole === "Admin" || userRole === "Supervisor")
+                .map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -78,7 +100,12 @@ export function AppSidebar() {
                       setLocation(item.url);
                     }}>
                       <item.icon />
-                      <span>{item.title}</span>
+                      <span>{item.title.startsWith('nav.') ? t(item.title as any) : item.title}</span>
+                      {item.badge && (
+                        <Badge variant="secondary" className="ml-auto text-xs">
+                          {item.badge}
+                        </Badge>
+                      )}
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -92,7 +119,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton onClick={handleLogout} data-testid="button-logout">
               <LogOut />
-              <span>Logout</span>
+              <span>{t('header.logout')}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

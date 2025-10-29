@@ -7,9 +7,10 @@ interface StatCardProps {
   icon: LucideIcon;
   subtitle?: string;
   variant?: "default" | "success" | "warning" | "danger";
+  className?: string;
 }
 
-export default function StatCard({ title, value, icon: Icon, subtitle, variant = "default" }: StatCardProps) {
+export default function StatCard({ title, value, icon: Icon, subtitle, variant = "default", className }: StatCardProps) {
   const iconColors = {
     default: "text-primary",
     success: "text-green-600",
@@ -18,7 +19,7 @@ export default function StatCard({ title, value, icon: Icon, subtitle, variant =
   };
 
   return (
-    <Card data-testid={`card-stat-${title.toLowerCase().replace(/\s+/g, "-")}`}>
+    <Card data-testid={`card-stat-${title.toLowerCase().replace(/\s+/g, "-")}`} className={className}>
       <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}

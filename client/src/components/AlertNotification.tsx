@@ -2,13 +2,27 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { AlertTriangle, Info, XCircle } from "lucide-react";
 
-interface AlertNotificationProps {
+interface Alert {
+  id: string;
   message: string;
   severity: string;
   timestamp: Date;
+  resolved?: boolean;
 }
 
-export default function AlertNotification({ message, severity, timestamp }: AlertNotificationProps) {
+interface AlertNotificationProps {
+  alert?: Alert;
+  message?: string;
+  severity?: string;
+  timestamp?: Date;
+}
+
+export default function AlertNotification({ 
+  alert, 
+  message = alert?.message || "No message", 
+  severity = alert?.severity || "Info", 
+  timestamp = alert?.timestamp || new Date() 
+}: AlertNotificationProps) {
   const severityConfig = {
     Critical: { icon: XCircle, color: "text-red-600", variant: "destructive" as const },
     Warning: { icon: AlertTriangle, color: "text-amber-600", variant: "default" as const },
