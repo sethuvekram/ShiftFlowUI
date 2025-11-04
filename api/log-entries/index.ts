@@ -1,6 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApiHandler, storage } from '../_utils';
-import { insertLogEntrySchema } from '../validation';
+import { createApiHandler, storage } from '../../lib/_utils';
+import { insertLogEntrySchema } from '../../lib/validation';
 
 const handler = createApiHandler(async (req: VercelRequest, res: VercelResponse) => {
   if (req.method === 'GET') {
