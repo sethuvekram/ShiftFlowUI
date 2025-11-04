@@ -1,20 +1,10 @@
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Clock, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
-
-interface Task {
-  id: string;
-  shiftId: string;
-  userId: string;
-  taskDescription: string;
-  status: string;
-  timestamp: Date;
-  priority: string;
-  remarks?: string | null;
-}
+import type { LogEntry } from "@shared/schema";
 
 interface TaskItemProps {
-  task?: Task;
+  task?: LogEntry;
   taskDescription?: string;
   timestamp?: Date;
   priority?: string;

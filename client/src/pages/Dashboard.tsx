@@ -103,11 +103,7 @@ export default function Dashboard() {
                 pendingTasks.map((task) => (
                   <TaskItem
                     key={task.id}
-                    task={task.taskDescription}
-                    timestamp={new Date(task.timestamp)}
-                    priority={task.priority}
-                    status={task.status}
-                    remarks={task.remarks || undefined}
+                    task={task}
                   />
                 ))
               )}

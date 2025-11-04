@@ -10,7 +10,7 @@
     "dev": "cross-env NODE_ENV=development tsx server/index.ts",
     "dev:port": "cross-env NODE_ENV=development PORT=$PORT tsx server/index.ts",
     "build": "npm run build:client && npm run build:api",
-    "build:client": "vite build --outDir client/dist",
+    "build:client": "vite build --outDir dist",
     "build:api": "tsc api/**/*.ts --outDir api/dist --target es2020 --module commonjs --esModuleInterop true --allowSyntheticDefaultImports true --strict true --skipLibCheck true",
     "build:server": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "cross-env NODE_ENV=production node dist/index.js",

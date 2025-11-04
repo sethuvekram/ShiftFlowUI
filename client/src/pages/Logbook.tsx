@@ -189,11 +189,7 @@ export default function Logbook() {
           {logEntries.map((entry) => (
             <TaskItem
               key={entry.id}
-              task={entry.taskDescription}
-              timestamp={new Date(entry.timestamp)}
-              priority={entry.priority}
-              status={entry.status}
-              remarks={entry.remarks || undefined}
+              task={entry}
             />
           ))}
         </CardContent>
