@@ -26,8 +26,6 @@ export interface LogEntry {
   timestamp: Date;
   priority: string;
   status: string;
-  department?: string;
-  area?: string;
 }
 
 export interface Machine {
@@ -36,8 +34,6 @@ export interface Machine {
   status: string;
   uptime: number;
   lastMaintenance?: Date | null;
-  department?: string;
-  area?: string;
 }
 
 export interface Handover {
@@ -49,8 +45,6 @@ export interface Handover {
   approvedAt?: Date | null;
   remarks?: string | null;
   createdAt: Date;
-  department?: string;
-  area?: string;
 }
 
 export interface Alert {
@@ -69,8 +63,6 @@ export interface InsertLogEntry {
   timestamp: Date;
   priority: string;
   status: string;
-  department?: string;
-  area?: string;
 }
 
 export interface InsertHandover {
@@ -81,6 +73,4 @@ export interface InsertHandover {
   approvedAt?: Date | null;
   remarks?: string | null;
   createdAt: Date;
-  department?: string;
-  area?: string;
 }

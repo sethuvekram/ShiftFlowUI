@@ -30,6 +30,8 @@ export const logEntries = pgTable("log_entries", {
   timestamp: timestamp("timestamp").notNull(),
   priority: text("priority").notNull(),
   status: text("status").notNull(),
+  department: text("department"),
+  area: text("area"),
 });
 
 export const machines = pgTable("machines", {
@@ -38,6 +40,8 @@ export const machines = pgTable("machines", {
   status: text("status").notNull(),
   uptime: integer("uptime").notNull(),
   lastMaintenance: timestamp("last_maintenance"),
+  department: text("department"),
+  area: text("area"),
 });
 
 export const handovers = pgTable("handovers", {
@@ -49,6 +53,8 @@ export const handovers = pgTable("handovers", {
   approvedAt: timestamp("approved_at"),
   remarks: text("remarks"),
   createdAt: timestamp("created_at").notNull(),
+  department: text("department"),
+  area: text("area"),
 });
 
 export const alerts = pgTable("alerts", {

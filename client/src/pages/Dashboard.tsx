@@ -95,7 +95,7 @@ export default function Dashboard() {
               <CardDescription>Tasks requiring attention this shift</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {pendingTasks.length === 0 ? (
+                {pendingTasks.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No pending tasks
                 </p>
@@ -103,7 +103,13 @@ export default function Dashboard() {
                 pendingTasks.map((task) => (
                   <TaskItem
                     key={task.id}
-                    task={task}
+                    taskDescription={task.taskDescription}
+                    timestamp={task.timestamp}
+                    priority={task.priority}
+                    status={task.status}
+                    remarks={task.remarks ?? undefined}
+                    department={task.department ?? undefined}
+                    area={task.area ?? undefined}
                   />
                 ))
               )}

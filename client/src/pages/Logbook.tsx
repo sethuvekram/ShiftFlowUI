@@ -5,13 +5,26 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import TaskItem from "@/components/TaskItem";
-import { Plus } from "lucide-react";
+import { Plus, Filter, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { LogEntry } from "@shared/schema";
+
+interface LogEntry {
+  id: string;
+  shiftId: string;
+  userId: string;
+  taskDescription: string;
+  remarks?: string | null;
+  timestamp: Date;
+  priority: string;
+  status: string;
+  department?: string;
+  area?: string;
+}
 
 export default function Logbook() {
   const { toast } = useToast();
@@ -19,6 +32,30 @@ export default function Logbook() {
   const [taskDescription, setTaskDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [remarks, setRemarks] = useState("");
+  const [department, setDepartment] = useState("");
+  const [area, setArea] = useState("");
+  const [filterDepartment, setFilterDepartment] = useState("All");
+
+  // Manufacturing departments for Renault operations
+  const departments = [
+    "Press Shop",
+    "Body Shop", 
+    "Paint Shop",
+    "Assembly Shop",
+    "Quality (VQA/IHQA/PTQA)",
+    "Maintenance",
+    "Safety & Environment"
+  ];
+
+  const areas = {
+    "Press Shop": ["Stamping Line 1", "Stamping Line 2", "Quality Control"],
+    "Body Shop": ["Robotic Welding", "Manual Assembly", "Quality Inspection"],
+    "Paint Shop": ["Paint Booth", "Multi-stage Coating", "Curing"],
+    "Assembly Shop": ["Trim Line", "Chassis Line", "Final Line"],
+    "Quality (VQA/IHQA/PTQA)": ["VQA Inspection", "IHQA Testing", "PTQA Monitoring"],
+    "Maintenance": ["Predictive Maintenance", "Corrective Maintenance", "Equipment Service"],
+    "Safety & Environment": ["Safety Compliance", "Environmental Control", "Training"]
+  };
 
   const { data: currentShift } = useQuery<any>({ 
     queryKey: ["/api/shifts/current"] 
@@ -37,11 +74,13 @@ export default function Logbook() {
       queryClient.invalidateQueries({ queryKey: ["/api/log-entries"] });
       toast({
         title: "Entry created",
-        description: "Log entry has been recorded successfully",
+        description: "Manufacturing log entry has been recorded successfully",
       });
       setTaskDescription("");
       setPriority("Medium");
       setRemarks("");
+      setDepartment("");
+      setArea("");
       setShowForm(false);
     },
     onError: () => {
@@ -83,6 +122,8 @@ export default function Logbook() {
       remarks: remarks || null,
       timestamp: new Date().toISOString(),
       status: "Pending",
+      department: department || null,
+      area: area || null,
     });
   };
 
@@ -90,32 +131,78 @@ export default function Logbook() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Digital Logbook</h1>
+          <h1 className="text-3xl font-bold mb-2">Manufacturing Operations Logbook</h1>
           <p className="text-muted-foreground">
-            Record and track shift activities
+            Record shift activities, handovers, and operational notes across departments
           </p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} data-testid="button-add-entry">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Entry
-        </Button>
+        <div className="flex gap-2">
+          <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+            <SelectTrigger className="w-[200px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by department" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Departments</SelectItem>
+              {departments.map((dept) => (
+                <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button onClick={() => setShowForm(!showForm)} data-testid="button-add-entry">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Entry
+          </Button>
+        </div>
       </div>
 
       {showForm && (
         <Card>
           <CardHeader>
-            <CardTitle>New Log Entry</CardTitle>
+            <CardTitle>New Manufacturing Log Entry</CardTitle>
             <CardDescription>
-              Record a task or event for the current shift
+              Record a task, event, or handover for the current shift
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Select value={department} onValueChange={(value) => {
+                    setDepartment(value);
+                    setArea(""); // Reset area when department changes
+                  }} disabled={createEntryMutation.isPending}>
+                    <SelectTrigger id="department">
+                      <Building2 className="h-4 w-4 mr-2" />
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="area">Area</Label>
+                  <Select value={area} onValueChange={setArea} disabled={createEntryMutation.isPending || !department}>
+                    <SelectTrigger id="area">
+                      <SelectValue placeholder="Select area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {department && areas[department as keyof typeof areas]?.map((a) => (
+                        <SelectItem key={a} value={a}>{a}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="task">Task Description</Label>
                 <Input
                   id="task"
-                  placeholder="Describe the task or activity"
+                  placeholder="Describe the task, operation, or handover activity"
                   value={taskDescription}
                   onChange={(e) => setTaskDescription(e.target.value)}
                   data-testid="input-task-description"
@@ -148,10 +235,10 @@ export default function Logbook() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="remarks">Remarks</Label>
+                <Label htmlFor="remarks">Remarks & Handover Notes</Label>
                 <Textarea
                   id="remarks"
-                  placeholder="Additional notes or observations (optional)"
+                  placeholder="Include quality checks, safety notes, equipment status, handover details, etc."
                   value={remarks}
                   onChange={(e) => setRemarks(e.target.value)}
                   className="min-h-24"
@@ -180,18 +267,40 @@ export default function Logbook() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Log Entries</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Manufacturing Operations Log
+            {filterDepartment !== "All" && (
+              <Badge variant="outline" className="ml-2">
+                {filterDepartment}
+              </Badge>
+            )}
+          </CardTitle>
           <CardDescription>
-            All activities recorded for the current shift
+            Shift activities, handovers, and operational notes from all departments
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {logEntries.map((entry) => (
-            <TaskItem
-              key={entry.id}
-              task={entry}
-            />
-          ))}
+          {logEntries
+            .filter((entry) => 
+              filterDepartment === "All" || entry.department === filterDepartment
+            )
+            .map((entry) => (
+              <TaskItem
+                key={entry.id}
+                task={entry}
+              />
+            ))}
+          {logEntries.filter((entry) => 
+            filterDepartment === "All" || entry.department === filterDepartment
+          ).length === 0 && (
+            <div className="text-center py-8 text-muted-foreground">
+              {filterDepartment === "All" 
+                ? "No log entries recorded yet"
+                : `No entries for ${filterDepartment} department`
+              }
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -5,18 +5,54 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { CheckCircle, XCircle, Clock, Building2, ArrowRight, Users } from "lucide-react";
 import { format } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Handover, LogEntry, Machine } from "@shared/schema";
+
+interface Handover {
+  id: string;
+  shiftId: string;
+  fromUserId: string;
+  toUserId?: string | null;
+  status: string;
+  approvedAt?: Date | null;
+  remarks?: string | null;
+  createdAt: Date;
+  department?: string;
+  area?: string;
+}
+
+interface LogEntry {
+  id: string;
+  shiftId: string;
+  userId: string;
+  taskDescription: string;
+  remarks?: string | null;
+  timestamp: Date;
+  priority: string;
+  status: string;
+  department?: string;
+  area?: string;
+}
+
+interface Machine {
+  id: string;
+  machineName: string;
+  status: string;
+  uptime: number;
+  lastMaintenance?: Date | null;
+  department?: string;
+  area?: string;
+}
 
 export default function HandoverPage() {
   const { toast } = useToast();
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>({});
   const [approvalRemarks, setApprovalRemarks] = useState("");
   const userRole = localStorage.getItem("userRole") || "User";
+  const userName = localStorage.getItem("userFullName") || "User";
 
   const { data: handovers = [] } = useQuery<Handover[]>({ 
     queryKey: ["/api/handovers"],
@@ -41,17 +77,16 @@ export default function HandoverPage() {
     },
   });
 
-  const pendingHandover = handovers.find(h => h.status === "Pending");
+  const pendingHandovers = handovers.filter(h => h.status === "pending");
+  const approvedHandovers = handovers.filter(h => h.status === "approved");
   const completedTasks = logEntries.filter(t => t.status === "Completed");
 
-  const handleApprove = () => {
-    if (!pendingHandover) return;
-
+  const handleApprove = (handoverId: string) => {
     updateHandoverMutation.mutate(
       { 
-        id: pendingHandover.id, 
+        id: handoverId, 
         data: { 
-          status: "Approved",
+          status: "approved",
           approvedAt: new Date().toISOString(),
         } 
       },
@@ -59,7 +94,7 @@ export default function HandoverPage() {
         onSuccess: () => {
           toast({
             title: "Handover approved",
-            description: "Shift handover has been approved successfully",
+            description: "Manufacturing handover has been approved successfully",
           });
           setCheckedItems({});
           setApprovalRemarks("");
@@ -75,21 +110,19 @@ export default function HandoverPage() {
     );
   };
 
-  const handleReject = () => {
-    if (!pendingHandover) return;
-
+  const handleReject = (handoverId: string) => {
     updateHandoverMutation.mutate(
       { 
-        id: pendingHandover.id, 
+        id: handoverId, 
         data: { 
-          status: "Rejected",
+          status: "rejected",
         } 
       },
       {
         onSuccess: () => {
           toast({
             title: "Handover rejected",
-            description: "Operator will be notified to review and resubmit",
+            description: "Personnel will be notified to review and resubmit",
           });
           setCheckedItems({});
           setApprovalRemarks("");
@@ -105,197 +138,119 @@ export default function HandoverPage() {
     );
   };
 
-  if (userRole !== "Supervisor") {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Handover Approval</h1>
-          <p className="text-muted-foreground">
-            Supervisor approval required
-          </p>
-        </div>
-        <Card>
-          <CardContent className="p-12 text-center">
-            <p className="text-muted-foreground">
-              This section is only accessible to Supervisors.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  if (!pendingHandover) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Handover Approval</h1>
-          <p className="text-muted-foreground">
-            Review and approve shift handover
-          </p>
-        </div>
-        <Card>
-          <CardContent className="p-12 text-center">
-            <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <p className="text-muted-foreground">
-              No pending handovers at this time
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold mb-2">Handover Approval</h1>
+        <h1 className="text-3xl font-bold mb-2">Manufacturing Handover Management</h1>
         <p className="text-muted-foreground">
-          Review and approve shift handover
+          Review and approve shift handovers across all manufacturing departments
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div>
-              <CardTitle>Shift Handover Review</CardTitle>
-              <CardDescription>
-                Submitted {format(new Date(pendingHandover.createdAt), "MMM dd, yyyy HH:mm")}
-              </CardDescription>
-            </div>
-            <Badge variant="secondary" data-testid="badge-status">
-              <Clock className="h-3 w-3 mr-1" />
-              Pending Approval
-            </Badge>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div>
-            <h3 className="font-medium mb-2">Operator Remarks</h3>
-            <p className="text-sm text-muted-foreground p-3 bg-muted/50 rounded-md" data-testid="text-operator-remarks">
-              {pendingHandover.remarks}
+      {/* Pending Handovers */}
+      {pendingHandovers.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Pending Handovers</h2>
+          {pendingHandovers.map((handover) => (
+            <Card key={handover.id} className="border-l-4 border-l-orange-500">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      {handover.department || "Manufacturing"} Handover
+                      {handover.area && (
+                        <Badge variant="outline">{handover.area}</Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      Submitted {format(new Date(handover.createdAt), "MMM dd, yyyy HH:mm")}
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Pending
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <h4 className="font-medium mb-2">Handover Details:</h4>
+                  <p className="text-sm text-gray-700">{handover.remarks}</p>
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => handleApprove(handover.id)}
+                    className="bg-green-600 hover:bg-green-700"
+                    disabled={updateHandoverMutation.isPending}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Approve
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => handleReject(handover.id)}
+                    disabled={updateHandoverMutation.isPending}
+                  >
+                    <XCircle className="h-4 w-4 mr-2" />
+                    Reject
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Recent Approved Handovers */}
+      {approvedHandovers.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Recent Approved Handovers</h2>
+          {approvedHandovers.slice(0, 3).map((handover) => (
+            <Card key={handover.id} className="border-l-4 border-l-green-500">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="space-y-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Building2 className="h-5 w-5" />
+                      {handover.department || "Manufacturing"} Handover
+                      {handover.area && (
+                        <Badge variant="outline">{handover.area}</Badge>
+                      )}
+                    </CardTitle>
+                    <CardDescription>
+                      Approved {handover.approvedAt && format(new Date(handover.approvedAt), "MMM dd, yyyy HH:mm")}
+                    </CardDescription>
+                  </div>
+                  <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Approved
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <p className="text-sm text-gray-700">{handover.remarks}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* No Handovers State */}
+      {pendingHandovers.length === 0 && approvedHandovers.length === 0 && (
+        <Card>
+          <CardContent className="p-12 text-center">
+            <Clock className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Handovers Available</h3>
+            <p className="text-muted-foreground">
+              No handovers pending review at this time
             </p>
-          </div>
-
-          <div className="space-y-4">
-            <h3 className="font-medium">Verification Checklist</h3>
-            
-            <div className="space-y-3">
-              <div className="flex items-start gap-3 p-3 rounded-md border">
-                <Checkbox
-                  id="check-tasks"
-                  checked={checkedItems.tasks || false}
-                  onCheckedChange={(checked) =>
-                    setCheckedItems({ ...checkedItems, tasks: checked as boolean })
-                  }
-                  data-testid="checkbox-tasks"
-                />
-                <div className="flex-1">
-                  <Label htmlFor="check-tasks" className="font-medium cursor-pointer">
-                    All tasks completed
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {completedTasks.length} tasks marked as completed
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-md border">
-                <Checkbox
-                  id="check-machines"
-                  checked={checkedItems.machines || false}
-                  onCheckedChange={(checked) =>
-                    setCheckedItems({ ...checkedItems, machines: checked as boolean })
-                  }
-                  data-testid="checkbox-machines"
-                />
-                <div className="flex-1">
-                  <Label htmlFor="check-machines" className="font-medium cursor-pointer">
-                    Machine statuses verified
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {machines.filter(m => m.status === "Running").length}/{machines.length} machines operational
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-md border">
-                <Checkbox
-                  id="check-documentation"
-                  checked={checkedItems.documentation || false}
-                  onCheckedChange={(checked) =>
-                    setCheckedItems({ ...checkedItems, documentation: checked as boolean })
-                  }
-                  data-testid="checkbox-documentation"
-                />
-                <div className="flex-1">
-                  <Label htmlFor="check-documentation" className="font-medium cursor-pointer">
-                    Documentation complete
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    All logbook entries properly documented
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3 p-3 rounded-md border">
-                <Checkbox
-                  id="check-safety"
-                  checked={checkedItems.safety || false}
-                  onCheckedChange={(checked) =>
-                    setCheckedItems({ ...checkedItems, safety: checked as boolean })
-                  }
-                  data-testid="checkbox-safety"
-                />
-                <div className="flex-1">
-                  <Label htmlFor="check-safety" className="font-medium cursor-pointer">
-                    Safety protocols followed
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    No safety incidents reported
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="approval-remarks">Supervisor Remarks</Label>
-            <Textarea
-              id="approval-remarks"
-              placeholder="Add any comments or instructions for the incoming shift..."
-              value={approvalRemarks}
-              onChange={(e) => setApprovalRemarks(e.target.value)}
-              className="min-h-24"
-              data-testid="textarea-approval-remarks"
-              disabled={updateHandoverMutation.isPending}
-            />
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={handleReject}
-              disabled={updateHandoverMutation.isPending}
-              data-testid="button-reject"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Reject Handover
-            </Button>
-            <Button
-              className="flex-1"
-              onClick={handleApprove}
-              disabled={updateHandoverMutation.isPending}
-              data-testid="button-approve"
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              {updateHandoverMutation.isPending ? "Processing..." : "Approve Handover"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
