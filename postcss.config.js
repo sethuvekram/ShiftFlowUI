@@ -1,13 +1,7 @@
 export default {
   plugins: {
-    tailwindcss: {
-      config: './tailwind.config.ts'
-    },
+    'tailwindcss/nesting': {},
+    tailwindcss: {},
     autoprefixer: {},
-  },
-  map: {
-    inline: false,
-    annotation: true,
-    sourcesContent: false
   }
 }
