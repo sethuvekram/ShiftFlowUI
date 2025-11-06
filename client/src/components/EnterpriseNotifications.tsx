@@ -163,7 +163,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     intervals.push(setInterval(() => {
       const productionAlerts = [
         {
-          title: "Objectif production atteint",
+          title: "Production target achieved",
           message: "Clio V Line: 850/850 vehicles produced ✓",
           type: 'success' as const,
           priority: 'medium' as const,
@@ -177,11 +177,11 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
           type: 'warning' as const,
           priority: 'high' as const,
           category: 'production' as const,
-          source: "Monitoring Automatique",
+          source: "Automatic Monitoring",
           soundAlert: true,
           actions: [
             { label: "View details", action: () => console.log("View details") },
-            { label: "Escalader", action: () => console.log("Escalate"), variant: 'destructive' as const }
+            { label: "Escalate", action: () => console.log("Escalate"), variant: 'destructive' as const }
           ]
         }
       ];
@@ -299,7 +299,7 @@ export const NotificationCenter: React.FC<{ isOpen: boolean; onClose: () => void
         <div className="flex items-center justify-between p-4 border-b">
           <div className="flex items-center gap-3">
             <Bell className="h-5 w-5 text-blue-600" />
-            <h2 className="text-lg font-semibold">Centre de Notifications</h2>
+            <h2 className="text-lg font-semibold">Notification Center</h2>
             {notifications.filter(n => !n.acknowledged).length > 0 && (
               <Badge variant="destructive">
                 {notifications.filter(n => !n.acknowledged).length}
@@ -329,7 +329,7 @@ export const NotificationCenter: React.FC<{ isOpen: boolean; onClose: () => void
               onClick={clearAllNotifications}
               className="w-full"
             >
-              Effacer toutes les notifications
+              Clear all notifications
             </Button>
           </div>
         )}
@@ -340,7 +340,7 @@ export const NotificationCenter: React.FC<{ isOpen: boolean; onClose: () => void
             {notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-gray-500">
                 <Bell className="h-12 w-12 mb-4 text-gray-300" />
-                <p className="text-sm">Aucune notification</p>
+                <p className="text-sm">No notifications</p>
               </div>
             ) : (
               notifications.map((notification) => (
@@ -415,7 +415,7 @@ export const NotificationCenter: React.FC<{ isOpen: boolean; onClose: () => void
                             onClick={() => acknowledgeNotification(notification.id)}
                             className="text-xs"
                           >
-                            Acquitter
+                            Acknowledge
                           </Button>
                         )}
                         <Button
@@ -424,7 +424,7 @@ export const NotificationCenter: React.FC<{ isOpen: boolean; onClose: () => void
                           onClick={() => dismissNotification(notification.id)}
                           className="text-xs"
                         >
-                          Supprimer
+                          Dismiss
                         </Button>
                       </div>
                     </div>

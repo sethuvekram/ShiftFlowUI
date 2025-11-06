@@ -41,6 +41,10 @@ export default function Login() {
       localStorage.setItem("userRole", data.user.role);
       localStorage.setItem("userName", data.user.fullName);
       localStorage.setItem("userId", data.user.id);
+      localStorage.setItem("userFullName", data.user.fullName);
+      if (data.user.department) {
+        localStorage.setItem("userDepartment", data.user.department);
+      }
       
       toast({
         title: "Login successful",

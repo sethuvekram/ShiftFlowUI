@@ -5,6 +5,7 @@ export interface User {
   password: string;
   role: string;
   fullName: string;
+  department?: string;
 }
 
 export interface Shift {

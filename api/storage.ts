@@ -5,15 +5,75 @@ import type { User, LogEntry, Machine, Handover, Alert, Shift, InsertLogEntry, I
 // Mock data for demonstration - replace with actual database calls
 export const apiStorage = {
   async getUserByUsername(username: string): Promise<User | null> {
-    // TODO: Replace with actual database query
-    // Example: return await db.select().from(users).where(eq(users.username, username)).then(r => r[0] || null);
-    return {
-      id: '1',
-      username: 'admin',
-      password: 'admin', // In production, this should be hashed
-      role: 'supervisor',
-      fullName: 'System Administrator'
-    };
+    // Manufacturing shift personnel with role-based access
+    const users = [
+      {
+        id: '1',
+        username: 'press.operator',
+        password: 'admin', // In production, this should be hashed
+        role: 'Press Operator',
+        fullName: 'Jean-Marc Dubois',
+        department: 'Press Shop'
+      },
+      {
+        id: '2',
+        username: 'body.supervisor',
+        password: 'admin',
+        role: 'Body Shop Supervisor',
+        fullName: 'Marie Leclerc',
+        department: 'Body Shop'
+      },
+      {
+        id: '3',
+        username: 'paint.operator',
+        password: 'admin',
+        role: 'Paint Operator',
+        fullName: 'Pierre Moreau',
+        department: 'Paint Shop'
+      },
+      {
+        id: '4',
+        username: 'assembly.lead',
+        password: 'admin',
+        role: 'Assembly Team Lead',
+        fullName: 'Sophie Martin',
+        department: 'Assembly Shop'
+      },
+      {
+        id: '5',
+        username: 'quality.inspector',
+        password: 'admin',
+        role: 'Quality Inspector',
+        fullName: 'Ahmed Benali',
+        department: 'Quality (VQA/IHQA/PTQA)'
+      },
+      {
+        id: '6',
+        username: 'maintenance.tech',
+        password: 'admin',
+        role: 'Maintenance Technician',
+        fullName: 'Carlos Rodriguez',
+        department: 'Maintenance'
+      },
+      {
+        id: '7',
+        username: 'safety.officer',
+        password: 'admin',
+        role: 'Safety Officer',
+        fullName: 'Anna Kowalski',
+        department: 'Safety & Environment'
+      },
+      {
+        id: '8',
+        username: 'shift.manager',
+        password: 'admin',
+        role: 'Shift Manager',
+        fullName: 'Thomas Schneider',
+        department: 'Manufacturing'
+      }
+    ];
+    
+    return users.find(user => user.username === username) || null;
   },
 
   async getShifts(): Promise<Shift[]> {

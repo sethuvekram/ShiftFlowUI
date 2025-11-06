@@ -32,9 +32,22 @@ export default function Logbook() {
   const [taskDescription, setTaskDescription] = useState("");
   const [priority, setPriority] = useState("Medium");
   const [remarks, setRemarks] = useState("");
+  
+  // Get user's department from localStorage and set as default filter
+  const userDepartment = localStorage.getItem("userDepartment");
+  const [filterDepartment, setFilterDepartment] = useState(userDepartment || "All");
+  
+  // Pre-fill department when adding new entry
   const [department, setDepartment] = useState("");
   const [area, setArea] = useState("");
-  const [filterDepartment, setFilterDepartment] = useState("All");
+
+  // When "Add Entry" is clicked, pre-fill with user's department
+  const handleAddEntry = () => {
+    setShowForm(!showForm);
+    if (!showForm && userDepartment) {
+      setDepartment(userDepartment);
+    }
+  };
 
   // Manufacturing departments for Renault operations
   const departments = [
@@ -135,6 +148,13 @@ export default function Logbook() {
           <p className="text-muted-foreground">
             Record shift activities, handovers, and operational notes across departments
           </p>
+          {userDepartment && filterDepartment !== "All" && filterDepartment === userDepartment && (
+            <div className="mt-2">
+              <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
+                👤 Your Department View: {userDepartment}
+              </Badge>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Select value={filterDepartment} onValueChange={setFilterDepartment}>
@@ -149,7 +169,7 @@ export default function Logbook() {
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={() => setShowForm(!showForm)} data-testid="button-add-entry">
+          <Button onClick={handleAddEntry} data-testid="button-add-entry">
             <Plus className="h-4 w-4 mr-2" />
             Add Entry
           </Button>

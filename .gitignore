@@ -90,3 +90,8 @@ Desktop.ini
 
 # Local development
 .local/
+
+
+# macOS system files
+.DS_Store
+._*

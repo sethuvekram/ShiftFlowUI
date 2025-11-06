@@ -14,25 +14,60 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const DEMO_USERS = [
   {
-    id: "pierre.dupont",
-    name: "Pierre Dupont",
-    role: "Supervisor",
-    department: "Clio V Production",
-    badge: "Senior Supervisor"
+    id: "press.operator",
+    name: "Jean-Marc Dubois",
+    role: "Press Operator",
+    department: "Press Shop",
+    badge: "Stamping Specialist"
   },
   {
-    id: "marie.laurent", 
-    name: "Marie Laurent",
-    role: "Operator",
-    department: "Assembly Line",
-    badge: "Expert Operator"
+    id: "body.supervisor", 
+    name: "Marie Leclerc",
+    role: "Body Shop Supervisor",
+    department: "Body Shop",
+    badge: "Welding Supervisor"
   },
   {
-    id: "jean.martin",
-    name: "Jean Martin", 
-    role: "Operator",
-    department: "Quality Control",
-    badge: "Quality Technician"
+    id: "paint.operator",
+    name: "Pierre Moreau", 
+    role: "Paint Operator",
+    department: "Paint Shop",
+    badge: "Coating Specialist"
+  },
+  {
+    id: "assembly.lead",
+    name: "Sophie Martin",
+    role: "Assembly Team Lead",
+    department: "Assembly Shop",
+    badge: "TCF Team Lead"
+  },
+  {
+    id: "quality.inspector",
+    name: "Ahmed Benali",
+    role: "Quality Inspector",
+    department: "Quality (VQA/IHQA/PTQA)",
+    badge: "Quality Control"
+  },
+  {
+    id: "maintenance.tech",
+    name: "Carlos Rodriguez",
+    role: "Maintenance Technician",
+    department: "Maintenance",
+    badge: "Predictive Maintenance"
+  },
+  {
+    id: "safety.officer",
+    name: "Anna Kowalski",
+    role: "Safety Officer",
+    department: "Safety & Environment",
+    badge: "Safety & Compliance"
+  },
+  {
+    id: "shift.manager",
+    name: "Thomas Schneider",
+    role: "Shift Manager",
+    department: "Manufacturing",
+    badge: "Production Manager"
   }
 ];
 
@@ -70,11 +105,13 @@ export default function EnhancedLogin() {
     
     localStorage.setItem("userRole", user.role);
     localStorage.setItem("userName", user.name);
+    localStorage.setItem("userFullName", user.name);
     localStorage.setItem("userDepartment", user.department);
+    localStorage.setItem("userId", user.id);
     
     toast({
       title: "Login successful",
-      description: `Bienvenue ${user.name} - ${user.department}`,
+      description: `Welcome ${user.name} - ${user.department}`,
     });
     
     setLocation("/dashboard");

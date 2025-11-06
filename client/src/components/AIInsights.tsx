@@ -347,8 +347,8 @@ export const AIInsightsDashboard: React.FC = () => {
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium">{model.name}</span>
                   <Badge variant={model.status === 'active' ? 'default' : 'secondary'}>
-                    {model.status === 'active' ? 'Actif' : 
-                     model.status === 'training' ? 'Entraînement' : 'Erreur'}
+                    {model.status === 'active' ? 'Active' : 
+                     model.status === 'training' ? 'Training' : 'Error'}
                   </Badge>
                 </div>
                 <div className="space-y-2">

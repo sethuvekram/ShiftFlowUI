@@ -32,10 +32,6 @@ export default function MachineStatusCard({
     Maintenance: "secondary", 
     Idle: "outline",
     Error: "destructive",
-    // French variants
-    "En fonctionnement": "default",
-    "Arrêt": "outline",
-    "Erreur": "destructive",
   };
 
   const statusColors = {
@@ -43,24 +39,20 @@ export default function MachineStatusCard({
     Maintenance: "text-amber-600",
     Idle: "text-muted-foreground", 
     Error: "text-red-600",
-    // French variants
-    "En fonctionnement": "text-green-600",
-    "Arrêt": "text-muted-foreground",
-    "Erreur": "text-red-600",
   };
 
-  // Translate status based on language
+  // Ensure all statuses are in English
   const getTranslatedStatus = (status: string) => {
-    if (language === 'en') {
-      const statusMap: Record<string, string> = {
-        "En fonctionnement": "Running",
-        "Maintenance": "Maintenance", 
-        "Arrêt": "Idle",
-        "Erreur": "Error"
-      };
-      return statusMap[status] || status;
-    }
-    return status; // Keep original for French
+    const statusMap: Record<string, string> = {
+      "En fonctionnement": "Running",
+      "Maintenance": "Maintenance", 
+      "Arrêt": "Idle",
+      "Idle": "Idle",
+      "Erreur": "Error",
+      "Error": "Error",
+      "Running": "Running"
+    };
+    return statusMap[status] || status;
   };
 
   const translatedStatus = getTranslatedStatus(status);
